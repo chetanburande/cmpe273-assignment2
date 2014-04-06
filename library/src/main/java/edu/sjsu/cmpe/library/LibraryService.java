@@ -30,6 +30,10 @@ public class LibraryService extends Service<LibraryServiceConfiguration> {
 	bootstrap.addBundle(new ViewBundle());
 	bootstrap.addBundle(new AssetsBundle());
     }
+    
+    
+    
+    
 
     @Override
     public void run(LibraryServiceConfiguration configuration,
@@ -41,12 +45,14 @@ public class LibraryService extends Service<LibraryServiceConfiguration> {
 		configuration.getLibraryName(), queueName,
 		topicName);
 	// TODO: Apollo STOMP Broker URL and login
-
+	
+	
 	/** Root API */
 	environment.addResource(RootResource.class);
 	/** Books APIs */
 	BookRepositoryInterface bookRepository = new BookRepository();
 	environment.addResource(new BookResource(bookRepository));
+	bookRepository.putConfiguration(configuration);
 
 	/** UI Resources */
 	environment.addResource(new HomeResource(bookRepository));
