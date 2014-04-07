@@ -1,5 +1,8 @@
 package edu.sjsu.cmpe.library;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +39,7 @@ public class LibraryService extends Service<LibraryServiceConfiguration> {
     
 
     @Override
-    public void run(LibraryServiceConfiguration configuration,
+    public void run(final LibraryServiceConfiguration configuration,
 	    Environment environment) throws Exception {
 	// This is how you pull the configurations from library_x_config.yml
 	String queueName = configuration.getStompQueueName();
@@ -50,11 +53,37 @@ public class LibraryService extends Service<LibraryServiceConfiguration> {
 	/** Root API */
 	environment.addResource(RootResource.class);
 	/** Books APIs */
-	BookRepositoryInterface bookRepository = new BookRepository();
+	final BookRepositoryInterface bookRepository = new BookRepository();
 	environment.addResource(new BookResource(bookRepository));
 	bookRepository.putConfiguration(configuration);
+	
+	
+	//Listener
+	
+	int numThreads = 1;
+	ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+	Runnable backgroundTask = new Runnable() {
+
+	    @Override
+	    public void run() {
+	    	while(true){
+	    	Listener listener = new Listener(configuration);
+	    	listener.listenService(bookRepository);
+	    	//bookRepository.getClass();
+//			System.out.println("Hello World");
+	    	}
+	    }
+
+	};
+
+	System.out.println("About to submit the background task");
+	executor.execute(backgroundTask);
+	System.out.println("Submitted the background task");
+	//executor.shutdown();
+	System.out.println("Finished the background task");
 
 	/** UI Resources */
 	environment.addResource(new HomeResource(bookRepository));
     }
+
 }
